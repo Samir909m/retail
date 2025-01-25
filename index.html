@@ -1,0 +1,111 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Спортивный дистрибьютор одежды</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <div v-if="!isLoggedIn">
+      <div class="login-selection">
+        <h2>Выберите способ входа</h2>
+        <div class="login-options">
+          <button @click="handleClientLogin">Вход для клиента</button>
+          <button @click="currentLoginType = 'distributor'">Вход для дистрибьютора</button>
+        </div>
+
+        <login-page 
+          v-if="currentLoginType === 'distributor'"
+          @login="handleLogin"
+          @cancel="currentLoginType = null"
+        ></login-page>
+      </div>
+    </div>
+    <div v-else>
+      <header>
+        <h1>{{ userType === 'client' ? 'Клиентский сервис' : 'Панель дистрибьютора' }}</h1>
+        <nav>
+          <template v-if="userType === 'client'">
+            <button @click="currentView = 'catalog'">Каталог</button>
+            <button @click="currentView = 'orders'">Мои заказы</button>
+            <button @click="currentView = 'cart'">Корзина</button>
+          </template>
+          <template v-else>
+            <button @click="currentView = 'manage-products'">Управление товарами</button>
+            <button @click="currentView = 'manage-orders'">Управление заказами</button>
+          </template>
+          <button @click="logout">Выйти</button>
+        </nav>
+      </header>
+
+      <main>
+        <!-- Client Views -->
+        <template v-if="userType === 'client'">
+          <div v-if="currentView === 'catalog'">
+            <div class="category-filter">
+              <button 
+                v-for="category in categories" 
+                :key="category"
+                @click="selectedCategory = category"
+                :class="{ active: selectedCategory === category }"
+              >
+                {{ category }}
+              </button>
+              <button @click="selectedCategory = null">Все</button>
+            </div>
+            <catalog-view 
+              :products="filteredProducts"
+              @add-to-cart="addToCart"
+            ></catalog-view>
+          </div>
+
+          <div v-else-if="currentView === 'orders'">
+            <orders-view 
+              :past-orders="pastOrders"
+            ></orders-view>
+          </div>
+          <div v-else-if="currentView === 'cart'">
+            <cart-page 
+              :cart-items="cartItems"
+              @remove-item="removeCartItem"
+              @update-quantity="updateCartItemQuantity"
+              @create-order="createOrder"
+              @clear-cart="clearCart"
+            ></cart-page>
+          </div>
+        </template>
+
+        <!-- Distributor Views -->
+        <template v-else>
+          <div v-if="currentView === 'manage-products'">
+            <manage-products 
+              :products="products"
+              @add-product="addProduct"
+              @update-product="updateProduct"
+              @delete-product="deleteProduct"
+            ></manage-products>
+          </div>
+
+          <div v-else-if="currentView === 'manage-orders'">
+            <manage-orders 
+              :orders="allOrders"
+              @update-order-status="updateOrderStatus"
+            ></manage-orders>
+          </div>
+        </template>
+      </main>
+
+      <cart-modal 
+        v-if="showCart"
+        :cart-items="cartItems"
+        @close-cart="showCart = false"
+        @create-order="createOrder"
+      ></cart-modal>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
